@@ -1,4 +1,4 @@
-function [STFT, AmpE, phiE, phipE, phippE,ridge,q] = retrieve_mode(s, Nfft, g, Lg, sigma_s, ridge)
+function [phipE_omega, phipE, phippE, phipEM, phippEM] = retrieve_mode(s, Nfft, g, Lg, sigma_s, ridge)
 %% retrieve_phase : retrieve signal phase with its' first and second derivatives
 %
 % INPUTS:
@@ -68,40 +68,45 @@ for n=1:L
     STFT(:,n) = vg.*(exp(2*1i*pi*min(Lg,n-1)*ft/Nfft));
 end
 
-if (nargin == 5)
-    [ridge] = exridge(STFT, 0, 0, 50);
-end
-
-AmpE = zeros(L, 1);
+%% compute estimates
+phipE_omega = zeros(L, 1);
 phipE = zeros(L, 1);
+phipEM = zeros(L, 1);
 phippE = zeros(L, 1);
+phippEM = zeros(L, 1);
+
 for n = 1:L
+    phipE_omega(n) = omega(ridge(n), n);
     phipE(n) = omega2(ridge(n), n);
+    
+    k = ridge(n);
+    th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phippE(n))^2);
+    th = round(th*Nfft/L);
+    lower = max(1, k - th);
+    upper = min(Nfft, k + th);
+    phipEM(n) = median(omega2(lower:upper, n));
+    
     phippE(n) = real(q(ridge(n), n));
-%     if n > 1
-%      phippE(n) = (phipE(n)-phipE(n-1))*L; 
-%     else
-%      phippE(n) = real(phipp(ridge(n), n));  
-%     end
 end
 
- for n = 1:L
+for n = 1:L
     k = ridge(n);
-    th = round(1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phippE(n))^2));
-    phippE(n) = median(real(q(k-th:k+th,n)));
-    AmpE(n) = abs(STFT(ridge(n), n))/sigma_s*(1 + phippE(n)^2*sigma_s^4)^(1/4);
- end
+    th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phippE(n))^2);
+    th = round(th*Nfft/L);
+    lower = max(1, k - th);
+    upper = min(Nfft, k + th);
+    phippEM(n) = median(real(q(lower:upper, n)));
+%     AmpE(n) = abs(STFT(ridge(n), n))/sigma_s*(1 + phippE(n)^2*sigma_s^4)^(1/4);
 
-% n0 = L/2;
-% k0 = ridge(n0);
-% th = round(1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phipp(k0, n0))^2));
-% V_test = zeros(size(ft));
-% V_test(k0-th:k0+th) = sum(real(phipp(k0-th:k0+th, n0)))/(2*th+1);
-% 
+%     if (n == floor(L/2))
+%         V_test = zeros(size(ft));
+%         V_test(lower:upper) = phippE(n);
+%     end
+ end
 
 % figure;
 % hold on;
-% plot((0:Nfft-1)*L/Nfft, real(phipp(:, n0)));
+% plot((0:Nfft-1)*L/Nfft, real(q(:, floor(L/2))));
 % plot((0:Nfft-1)*L/Nfft, V_test);
 % hold off;
 % pause;
@@ -115,7 +120,5 @@ end
 %% finite differences of phi'
 % phippE(1:Lg-1) = diff(phipE(1:Lg))*L;
 % phippE(L-Lg+1:L) = diff(phipE(L-Lg:L))*L;
-
-phiE = cumtrapz((0:L-1)/L, phipE);
 
 end

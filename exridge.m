@@ -18,8 +18,10 @@ Et     = abs(Tx).^2;
 [na,N] = size(Tx);
 
 % Parameters of the algorithm.
-da = floor(jump*(na/N)); 
-ng = 60; % Number of random initializations.
+% da = floor(jump*(na/N)); 
+% ng = 60; % Number of random initializations.
+da = jump; 
+ng = min(60,floor(N/8)); % Number of random initializations.
 
 ccur = zeros(1,N);
 c = ccur;    
@@ -27,7 +29,6 @@ e = -Inf;
 
 
 for k = floor(linspace(N/(ng+1),N-N/(ng+1),ng))
-    
     [ecur,idx] = max(Et(:,k));        
     ccur(k) = idx;
     Iq = max(1,idx-da):min(na,idx+da);
