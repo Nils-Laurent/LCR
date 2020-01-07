@@ -1,4 +1,4 @@
-function [s_noise_hard,s_noise_soft, tfr_noise_soft, gamma_estime,h,Lh] = denoise_SSR_HT(sn, nr, Nfft, window, sigma_opt, s_clean)
+function [s_noise_hard,s_noise_soft, tfr_noise_soft, gamma_estime,h,Lh] = denoise_SSR_HT(sn, nr, clwin, Nfft, window, sigma_opt, s_clean)
 
 %INPUT
 %sig        : type of studied signal
@@ -37,7 +37,7 @@ gamma_estime = median(abs(Y2(:)))/0.6745;
 % imagesc(abs(tfr_noise) > 3*gamma_estime);
 % set(gca,'ydir','normal');
 % pause
-clwin = 10;
+%clwin = 10;
 [Cs] = exridge_mult(tfr_noise,nr,0,0,clwin);
 
 Cs = Cs';

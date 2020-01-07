@@ -1,7 +1,7 @@
-function test_denoise_ME(signal, NRidges, NR_phip, NR_phipp, sigma, Nfft)
+function test_denoise_ME(signal, NRidges, clwin, NR_phip, NR_phipp, sigma, Nfft, fig_title)
 L = size(signal, 1);
 SNRs = -10:5:30;
-NRep = 1;
+NRep = 10;
 
 out_SNR_ME = zeros(length(SNRs), 1);
 out_SNR_SSR_HT = zeros(length(SNRs), 1);
@@ -22,11 +22,10 @@ for k=1:length(SNRs)
         x = sigmerge(signal, WGN, SNRs(k));
         
         %% Model based denoising
-        [s_ME, ~, Lg, E6] = denoise_model_estim(x, NRidges, sigma, Nfft, NR_phip, NR_phipp);
+        [s_ME, ~, Lg, E6] = denoise_model_estim(x, NRidges, clwin, sigma, Nfft, NR_phip, NR_phipp);
         
         %% SSR-HT denoising
-        [~, s_SSR_HT] = denoise_SSR_HT(x, NRidges, Nfft, 'gauss', sigma);
-        %s_SSR_HT = s_ME;
+        [~, s_SSR_HT] = denoise_SSR_HT(x, NRidges, clwin, Nfft, 'gauss', sigma);
         
         %% Threshold denoising
         [s_TH] = denoise_hard_threshold(x, sigma, Nfft);
@@ -69,36 +68,36 @@ out_SNR_ME = out_SNR_ME/NRep;
 out_SNR_SSR_HT = out_SNR_SSR_HT/NRep;
 out_SNR_TH = out_SNR_TH/NRep;
 
-out_SNR_phipER = out_SNR_phipER/NRep;
-out_SNR_phipE1 = out_SNR_phipE1/NRep;
-out_SNR_phipE2 = out_SNR_phipE2/NRep;
-out_SNR_phippE = out_SNR_phippE/NRep;
-out_SNR_phipEM = out_SNR_phipEM/NRep;
-out_SNR_phippEM = out_SNR_phippEM/NRep;
-
-set(groot, 'defaultLegendInterpreter','latex');
-
-for r=1:NRidges
-    figure;
-    
-    subplot(2, 1, 1);
-    title(sprintf("$\\phi_%d'$ estimations", r), 'Interpreter', 'latex');
-    hold on;
-    plot(SNRs, out_SNR_phipEM(:, r), 'k-o', 'DisplayName', "SNR-$\omega^{(2)}_M(t, r(t))$");
-    plot(SNRs, out_SNR_phipE2(:, r), '--', 'DisplayName', "SNR-$\omega^{(2)}(t, r(t))$");
-    plot(SNRs, out_SNR_phipE1(:, r), ':', 'DisplayName', "SNR-$\omega(t, r(t))$");
-    plot(SNRs, out_SNR_phipER(:, r), 'DisplayName', "SNR-$r(t)$");
-    hold off;
-    legend;
-    
-    subplot(2, 1, 2);
-    title(sprintf("$\\phi_%d''$ estimations", r), 'Interpreter', 'latex');
-    hold on;
-    plot(SNRs, out_SNR_phippEM(:, r), 'k-o', 'DisplayName', 'SNR-$Re(\widetilde{q}(t, r(t)))_M$');
-    plot(SNRs, out_SNR_phippE(:, r), '--', 'DisplayName', 'SNR-$Re(\widetilde{q}(t, r(t)))$');
-    hold off;
-    legend;
-end
+% out_SNR_phipER = out_SNR_phipER/NRep;
+% out_SNR_phipE1 = out_SNR_phipE1/NRep;
+% out_SNR_phipE2 = out_SNR_phipE2/NRep;
+% out_SNR_phippE = out_SNR_phippE/NRep;
+% out_SNR_phipEM = out_SNR_phipEM/NRep;
+% out_SNR_phippEM = out_SNR_phippEM/NRep;
+% 
+% set(groot, 'defaultLegendInterpreter','latex');
+% 
+% for r=1:NRidges
+%     figure;
+%     
+%     subplot(2, 1, 1);
+%     title(sprintf("$\\phi_%d'$ estimations", r), 'Interpreter', 'latex');
+%     hold on;
+%     plot(SNRs, out_SNR_phipEM(:, r), 'k-o', 'DisplayName', "SNR-$\omega^{(2)}_M(t, r(t))$");
+%     plot(SNRs, out_SNR_phipE2(:, r), '--', 'DisplayName', "SNR-$\omega^{(2)}(t, r(t))$");
+%     plot(SNRs, out_SNR_phipE1(:, r), ':', 'DisplayName', "SNR-$\omega(t, r(t))$");
+%     plot(SNRs, out_SNR_phipER(:, r), 'DisplayName', "SNR-$r(t)$");
+%     hold off;
+%     legend;
+%     
+%     subplot(2, 1, 2);
+%     title(sprintf("$\\phi_%d''$ estimations", r), 'Interpreter', 'latex');
+%     hold on;
+%     plot(SNRs, out_SNR_phippEM(:, r), 'k-o', 'DisplayName', 'SNR-$Re(\widetilde{q}(t, r(t)))_M$');
+%     plot(SNRs, out_SNR_phippE(:, r), '--', 'DisplayName', 'SNR-$Re(\widetilde{q}(t, r(t)))$');
+%     hold off;
+%     legend;
+% end
 
 figure;
 hold on;
@@ -107,6 +106,7 @@ plot(SNRs, out_SNR_SSR_HT, '--', 'DisplayName', 'denoised-SSR-HT');
 plot(SNRs, out_SNR_TH, 'DisplayName', 'denoised-HT');
 hold off;
 legend;
+title(fig_title);
 
 end
 

@@ -1,4 +1,4 @@
-function [phipE_omega, phipE, phippE, phipEM, phippEM] = retrieve_mode(s, Nfft, g, Lg, sigma_s, ridge)
+function [phipE_o1, phipE_o2, phippE, phipE_o2_median, phippE_median] = retrieve_mode(s, Nfft, g, Lg, sigma_s, ridge)
 %% retrieve_phase : retrieve signal phase with its' first and second derivatives
 %
 % INPUTS:
@@ -69,40 +69,41 @@ for n=1:L
 end
 
 %% compute estimates
-phipE_omega = zeros(L, 1);
-phipE = zeros(L, 1);
-phipEM = zeros(L, 1);
+phipE_o1 = zeros(L, 1);
+phipE_o2 = zeros(L, 1);
+phipE_o2_median = zeros(L, 1);
 phippE = zeros(L, 1);
-phippEM = zeros(L, 1);
+phippE_median = zeros(L, 1);
 
 for n = 1:L
-    phipE_omega(n) = omega(ridge(n), n);
-    phipE(n) = omega2(ridge(n), n);
-    
-    k = ridge(n);
-    th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phippE(n))^2);
-    th = round(th*Nfft/L);
-    lower = max(1, k - th);
-    upper = min(Nfft, k + th);
-    phipEM(n) = median(omega2(lower:upper, n));
+    phipE_o1(n) = omega(ridge(n), n);
+    phipE_o2(n) = omega2(ridge(n), n);
     
     phippE(n) = real(q(ridge(n), n));
-end
-
-for n = 1:L
+    
     k = ridge(n);
-    th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phippE(n))^2);
+    th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*phippE(n)^2);
     th = round(th*Nfft/L);
     lower = max(1, k - th);
     upper = min(Nfft, k + th);
-    phippEM(n) = median(real(q(lower:upper, n)));
-%     AmpE(n) = abs(STFT(ridge(n), n))/sigma_s*(1 + phippE(n)^2*sigma_s^4)^(1/4);
+    phipE_o2_median(n) = median(omega2(lower:upper, n));
+    phippE_median(n) = median(real(q(lower:upper, n)));
+end
 
-%     if (n == floor(L/2))
-%         V_test = zeros(size(ft));
-%         V_test(lower:upper) = phippE(n);
-%     end
- end
+% for n = 1:L
+%     k = ridge(n);
+%     th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*real(phippE(n))^2);
+%     th = round(th*Nfft/L);
+%     lower = max(1, k - th);
+%     upper = min(Nfft, k + th);
+%     phippE_median(n) = median(real(q(lower:upper, n)));
+% %     AmpE(n) = abs(STFT(ridge(n), n))/sigma_s*(1 + phippE(n)^2*sigma_s^4)^(1/4);
+% 
+% %     if (n == floor(L/2))
+% %         V_test = zeros(size(ft));
+% %         V_test(lower:upper) = phippE(n);
+% %     end
+%  end
 
 % figure;
 % hold on;

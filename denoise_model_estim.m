@@ -1,4 +1,4 @@
-function [s_denoised_ME, TFR_denoised, Lg, E6] = denoise_model_estim(s_noise, NRidges, sigma_s, Nfft, phip, phipp)
+function [s_denoised_ME, TFR_denoised, Lg, E6] = denoise_model_estim(s_noise, NRidges, clwin, sigma_s, Nfft, phip, phipp)
 
 L = length(s_noise);
 cas = 1;
@@ -11,7 +11,7 @@ cas = 1;
 TFR_noise = TFR_noise/L;
 
 %% ridge extraction
-[Cs] = exridge_mult(TFR_noise, NRidges, 0, 0, 10);
+[Cs] = exridge_mult(TFR_noise, NRidges, 0, 0, clwin);
 
 % figure;
 % hold on;
@@ -25,6 +25,7 @@ TFR_noise = TFR_noise/L;
 
 TFR_denoised = zeros(size(TFR_noise));
 E6 = zeros(NRidges, 6, L);
+gamma = median(abs(real(TFR_noise(:))))/0.6745;
 for r = 1:NRidges
     %% mode estimation
     [phipE1, phipE2, phippE, phipEM, phippEM] = retrieve_mode(s_noise, Nfft, g, Lg, sigma_s, Cs(r, :));
@@ -32,8 +33,8 @@ for r = 1:NRidges
     E6(r, :, :) = transpose(X);
 
     %% use estimate and inverse STFT
-    %[TFR_denoised_r] = tfr_from_estimation(sigma_s, TFR_noise, phipEM, phippEM, L, Nfft);
-    [TFR_denoised_r] = tfr_from_estimation(sigma_s, TFR_noise, phip, phipp, L, Nfft);
+    [TFR_denoised_r] = tfr_from_estimation(sigma_s, gamma, TFR_noise, phipEM, phippEM, L, Nfft);
+    %[TFR_denoised_r] = tfr_from_estimation(sigma_s, TFR_noise, phip, phipp, L, Nfft);
     TFR_denoised = TFR_denoised + TFR_denoised_r;
 end
 
@@ -57,11 +58,11 @@ end
 % set(gca,'ydir','normal');
 % colorbar;
 % figure;
-% imagesc(TFR_D_mod);
+% imagesc(XLg, 1:Nfft, TFR_D_mod);
 % title("modulus error");
 % set(gca,'ydir','normal');
 % colorbar;
-% 
+
 % XERR = zeros(L, 1);
 % for index = 1:L
 %     kRidge = round(phip(index)*Nfft/L)+1;

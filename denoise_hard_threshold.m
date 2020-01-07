@@ -7,8 +7,8 @@ L = length(s_noise);
 TFR_noise = TFR_noise/L;
 
 Y2 = real(TFR_noise);
-TFR_th = TFR_noise;
 gamma = median(abs(Y2(:)))/0.6745;
+TFR_th = TFR_noise;
 TFR_th(abs(TFR_th) < 3*gamma) = 0;
 
 [s_denoised] = L*itfrstft(TFR_th, cas, g);
