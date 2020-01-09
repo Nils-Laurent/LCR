@@ -1,4 +1,4 @@
-function [s_noise_hard,s_noise_soft, tfr_noise_soft, gamma_estime,h,Lh] = denoise_SSR_HT(sn, nr, clwin, Nfft, window, sigma_opt, s_clean)
+function [s_noise_hard, s_noise_soft_var, s_noise_soft_init, tfr_noise_soft_init, modes_var,h,Lh] = denoise_SSR_HT_variant(sn, nr, clwin, Nfft, window, sigma_opt, s_clean)
 
 %INPUT
 %sig        : type of studied signal
@@ -9,7 +9,7 @@ function [s_noise_hard,s_noise_soft, tfr_noise_soft, gamma_estime,h,Lh] = denois
 %tfr_noise_hard     : noisy STFT, hard thresholded
 %tfr_noise_soft     : noisy STFT, soft thresholded
 
-cas = 2;
+cas = 1;
 
 %we build the filter h
 if strcmp(window,'hamming')
@@ -45,10 +45,18 @@ Cs = Cs';
 B = size(tfr_noise); 
 Abstfr      = abs(tfr_noise);
 
+s_noise_hard = zeros(size(sn));
+s_noise_soft_init = zeros(size(sn));
+s_noise_soft_var = zeros(size(sn));
+
+modes_var = zeros(length(sn), nr);
+
 %construction of the TF mask
-tfr_noise_hard = zeros(B); 
-tfr_noise_soft = zeros(B);
 for j=1:nr,
+    tfr_noise_hard = zeros(B); 
+    tfr_noise_soft_init = zeros(B);
+    tfr_noise_soft_var = zeros(B);
+    
     for r = 1:B(2)  
         val = 3*gamma_estime; %threshold for the transform depending on the noise level
         if (Abstfr(Cs(r,j),r) > val)
@@ -86,17 +94,19 @@ for j=1:nr,
             if (abs(tfr_noise(Cs(r,j),r))-abs(tfr_noise(Cs(r,j)-1,r)) >= 2) &&...
                     (abs(tfr_noise(Cs(r,j),r))-abs(tfr_noise(Cs(r,j)+1,r)) >= 2)...
                     && (Cs(r,j)-eta >= 1) && (Cs(r,j)+eta <= B(1))
-                %[Y,I] = max(abs(imag(tfr_noise(indmin:indmax,r))));
-                [Y,I] = max(abs(tfr_noise(indmin:indmax,r)));
+                [Y,I] = max(abs(imag(tfr_noise(indmin:indmax,r))));
                 shift = I - eta -1;
                 tfr_noise_shift_imag = circshift(imag(tfr_noise(:,r)),shift);
-                %[Y,I] = max(abs(real(tfr_noise(indmin:indmax,r))));
-                %shift = I - eta -1;
+                [Y,I] = max(abs(real(tfr_noise(indmin:indmax,r))));
+                shift = I - eta -1;
                 tfr_noise_shift_real = circshift(real(tfr_noise(:,r)),shift);
                 tfr_noise_shift = tfr_noise_shift_real + 1i*tfr_noise_shift_imag;
                 
                 %Symmetry step
-                tfr_noise_soft(indmin:indmax,r) = 1/2*(tfr_noise_shift(indmin:indmax)+tfr_noise_shift(indmax:-1:indmin));
+                tfr_noise_soft_init(indmin:indmax,r) = 1/2*(tfr_noise_shift(indmin:indmax)+tfr_noise_shift(indmax:-1:indmin));
+                
+                %Symmetry step for variant
+                tfr_noise_soft_var(indmin:indmax,r) = 1/2*(tfr_noise(indmin:indmax,r)+tfr_noise(indmax:-1:indmin,r));
             else
                 tfr_noise_shift = tfr_noise(:,r);
                 
@@ -104,27 +114,34 @@ for j=1:nr,
                 if abs(tfr_noise_shift(Cs(r,j)+1)) >= abs(tfr_noise_shift(Cs(r,j)-1))
                     for k = 0:eta
                         if ((Cs(r,j)-k) >= 1)&&((Cs(r,j)+k+1) <= B(1))
-                            tfr_noise_soft(Cs(r,j)-k,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k)+tfr_noise_shift(Cs(r,j)+k+1));
-                            tfr_noise_soft(Cs(r,j)+k+1,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k)+tfr_noise_shift(Cs(r,j)+k+1));
+                            tfr_noise_soft_init(Cs(r,j)-k,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k)+tfr_noise_shift(Cs(r,j)+k+1));
+                            tfr_noise_soft_init(Cs(r,j)+k+1,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k)+tfr_noise_shift(Cs(r,j)+k+1));
                         end
                     end
                 else
                     for k = 0:eta
                         if ((Cs(r,j)-k-1) >= 1)&&((Cs(r,j)+k) <= B(1))   
-                            tfr_noise_soft(Cs(r,j)-k-1,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k-1)+tfr_noise_shift(Cs(r,j)+k));
-                            tfr_noise_soft(Cs(r,j)+k,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k-1)+tfr_noise_shift(Cs(r,j)+k));
+                            tfr_noise_soft_init(Cs(r,j)-k-1,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k-1)+tfr_noise_shift(Cs(r,j)+k));
+                            tfr_noise_soft_init(Cs(r,j)+k,r)= 1/2*(tfr_noise_shift(Cs(r,j)-k-1)+tfr_noise_shift(Cs(r,j)+k));
                         end
                     end
                 end
+                tfr_noise_soft_var(:, r) = tfr_noise_soft_init(:, r);
             end
               
             %smoothing step
             X = [1:max(1,Cs(r,j)-eta-4) max(1,Cs(r,j)-eta):min(B(1),Cs(r,j)+eta) min(B(1),Cs(r,j)+eta+4):B(1)];
             X  = unique(X);
-            Y  = tfr_noise_soft(X,r);
+            Y  = tfr_noise_soft_init(X,r);
             YY = pchip(X,real(Y),1:B(1));
             ZZ = pchip(X,imag(Y),1:B(1));
-            tfr_noise_soft(:,r) = YY' + 1i*ZZ';
+            tfr_noise_soft_init(:,r) = YY' + 1i*ZZ';
+            
+            %smoothing variant
+            Y  = tfr_noise_soft_var(X,r);
+            YY = pchip(X,real(Y),1:B(1));
+            ZZ = pchip(X,imag(Y),1:B(1));
+            tfr_noise_soft_var(:,r) = YY' + 1i*ZZ';
         end
     end
 %             figure
@@ -136,6 +153,13 @@ for j=1:nr,
 %             figure
 %             plot(1:B(1),imag(tfr(:,500)),1:B(1),imag(tfr_noise_soft(:,500)),'--', 1:B(1),imag(tfr_noise_hard(:, 500)), '-o');
 %             pause
+
+    s_noise_hard = s_noise_hard + itfrstft(tfr_noise_hard,cas,h);
+    s_noise_soft_init = s_noise_soft_init + itfrstft(tfr_noise_soft_init,cas,h);
+    
+    cmode = itfrstft(tfr_noise_soft_var,cas,h);
+    s_noise_soft_var = s_noise_soft_var + cmode;
+    modes_var(:, j) = cmode;
 end
 
 % figure;
@@ -149,5 +173,6 @@ end
 % axis square
 % pause
 
-s_noise_hard = itfrstft(tfr_noise_hard,cas,h);
-s_noise_soft = itfrstft(tfr_noise_soft,cas,h);
+% s_noise_hard = itfrstft(tfr_noise_hard,cas,h);
+% s_noise_soft_init = itfrstft(tfr_noise_soft,cas,h);
+% s_noise_soft_var = itfrstft(tfr_noise_soft_var,cas,h);

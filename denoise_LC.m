@@ -1,10 +1,9 @@
-function [s_denoised_ME, TFR_denoised, Lg, E6] = denoise_model_estim(s_noise, NRidges, clwin, sigma_s, Nfft, phip, phipp)
+function [s_denoised_LC, TFR_denoised, Lg, E2] = denoise_LC(s_noise, NRidges, clwin, sigma_s, Nfft, phip, phipp)
 
 L = length(s_noise);
 cas = 1;
 
 [g, Lg] = create_gaussian_window(L, Nfft, sigma_s);
-%sigma_s = sigma_t*Nfft/L;
 
 
 [TFR_noise] = tfrstft(s_noise, Nfft, cas, g, Lg);
@@ -24,19 +23,20 @@ TFR_noise = TFR_noise/L;
 % pause;
 
 TFR_denoised = zeros(size(TFR_noise));
-E6 = zeros(NRidges, 6, L);
-gamma = median(abs(real(TFR_noise(:))))/0.6745;
+E2 = zeros(NRidges, 2, L);
+%gamma = median(abs(real(TFR_noise(:))))/0.6745;
 for r = 1:NRidges
     %% mode estimation
-    [phipE1, phipE2, phippE, phipEM, phippEM] = retrieve_mode(s_noise, Nfft, g, Lg, sigma_s, Cs(r, :));
-    X = [L/Nfft*Cs(r, :)', phipE1, phipE2, phippE, phipEM, phippEM];
-    E6(r, :, :) = transpose(X);
+    [phipE1, phipE2, phippE] = retrieve_mode(s_noise, Nfft, g, Lg, sigma_s, Cs(r, :));
+    X = [phipE1, phipE2];
+    E2(r, :, :) = transpose(X);
 
     %% use estimate and inverse STFT
-    [TFR_denoised_r] = tfr_from_estimation(sigma_s, gamma, TFR_noise, phipEM, phippEM, L, Nfft);
-    %[TFR_denoised_r] = tfr_from_estimation(sigma_s, TFR_noise, phip, phipp, L, Nfft);
+    [TFR_denoised_r] = tfr_from_estimation(sigma_s, TFR_noise, phipE2, phippE, L, Nfft);
     TFR_denoised = TFR_denoised + TFR_denoised_r;
 end
+
+[s_denoised_LC] = L*itfrstft(TFR_denoised, cas, g);
 
 % figure;
 % imagesc((0:L-1)/L, (L/Nfft)*(1:Nfft), abs(TFR_denoised));
@@ -91,7 +91,5 @@ end
 % plot(1:Nfft,real(TFR_denoised(:,T0)) - real(TFR_noise(:,T0)), 1:Nfft,imag(TFR_denoised(:,T0)) - imag(TFR_noise(:,T0)), '--');
 % title(sprintf("errors, T0 = %d", T0));
 % % pause
-
-[s_denoised_ME] = L*itfrstft(TFR_denoised, cas, g);
 
 end

@@ -1,4 +1,4 @@
-function [phipE_o1, phipE_o2, phippE, phipE_o2_median, phippE_median] = retrieve_mode(s, Nfft, g, Lg, sigma_s, ridge)
+function [phipE_o1, phipE_o2, phippE] = retrieve_mode(s, Nfft, g, Lg, sigma_s, ridge)
 %% retrieve_phase : retrieve signal phase with its' first and second derivatives
 %
 % INPUTS:
@@ -71,23 +71,12 @@ end
 %% compute estimates
 phipE_o1 = zeros(L, 1);
 phipE_o2 = zeros(L, 1);
-phipE_o2_median = zeros(L, 1);
 phippE = zeros(L, 1);
-phippE_median = zeros(L, 1);
 
 for n = 1:L
     phipE_o1(n) = omega(ridge(n), n);
     phipE_o2(n) = omega2(ridge(n), n);
-    
     phippE(n) = real(q(ridge(n), n));
-    
-    k = ridge(n);
-    th = 1/sqrt(2*pi)*sqrt(1/sigma_s^2 + sigma_s^2*phippE(n)^2);
-    th = round(th*Nfft/L);
-    lower = max(1, k - th);
-    upper = min(Nfft, k + th);
-    phipE_o2_median(n) = median(omega2(lower:upper, n));
-    phippE_median(n) = median(real(q(lower:upper, n)));
 end
 
 % for n = 1:L
