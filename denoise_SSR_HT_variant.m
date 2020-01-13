@@ -1,4 +1,4 @@
-function [s_noise_hard, s_noise_soft_var, s_noise_soft_init, tfr_noise_soft_init, modes_var,h,Lh] = denoise_SSR_HT_variant(sn, nr, clwin, Nfft, window, sigma_opt, s_clean)
+function [s_noise_hard, s_noise_soft_var, s_noise_soft_init, modes_var, tfr_noise_soft_init, h,Lh] = denoise_SSR_HT_variant(sn, nr, clwin, Nfft, window, sigma_opt, s_clean)
 
 %INPUT
 %sig        : type of studied signal
@@ -9,7 +9,7 @@ function [s_noise_hard, s_noise_soft_var, s_noise_soft_init, tfr_noise_soft_init
 %tfr_noise_hard     : noisy STFT, hard thresholded
 %tfr_noise_soft     : noisy STFT, soft thresholded
 
-cas = 1;
+cas = 2;
 
 %we build the filter h
 if strcmp(window,'hamming')

@@ -36,7 +36,7 @@ for CR=CRs
     %% denoising test
     ftitle = sprintf("Chirp rate = %d", CR);
     fprintf("%s\n", ftitle);
-    [SNRs_phi_o1, SNRs_phi_o2] = test_estimates_ME(...
+    [SNRs_phi_o1, SNRs_phi_o2] = test_estimates_LC(...
         s_clean, NRidges, clwin, NR_phip, NR_phipp, sigma, Nfft, SNRs, NRep);
     out_SNRs_o2(iCR, :) = SNRs_phi_o2;
     out_SNRs_o1(iCR, :) = SNRs_phi_o1;
@@ -45,14 +45,13 @@ end
 set(groot, 'defaultLegendInterpreter','latex');
 
 figure;
-%title("$\phi'$ estimations", 'Interpreter', 'latex');
 hold on;
-plot(SNRs, out_SNRs_o2(1, :), 'k-o', 'DisplayName', "R1 $\hat{\omega}^{[2]}$");
-plot(SNRs, out_SNRs_o1(1, :), 'k--o', 'DisplayName', "R1 $\hat{\omega}$");
-plot(SNRs, out_SNRs_o2(2, :), 'b-*', 'DisplayName', "R2 $\hat{\omega}^{[2]}$");
-plot(SNRs, out_SNRs_o1(2, :), 'b--*', 'DisplayName', "R2 $\hat{\omega}$");
-plot(SNRs, out_SNRs_o2(3, :), 'r', 'DisplayName', "R3 $\hat{\omega}^{[2]}$");
-plot(SNRs, out_SNRs_o1(3, :), 'r--', 'DisplayName', "R3 $\hat{\omega}$");
+plot(SNRs, out_SNRs_o2(3, :), 'r', 'DisplayName', "$f_1, \hat{\omega}_{\widetilde{f}}^{[2]}$");
+plot(SNRs, out_SNRs_o1(3, :), 'r--', 'DisplayName', "$f_1, \hat{\omega}_{\widetilde{f}}$");
+plot(SNRs, out_SNRs_o2(2, :), 'b-*', 'DisplayName', "$f_2, \hat{\omega}_{\widetilde{f}}^{[2]}$");
+plot(SNRs, out_SNRs_o1(2, :), 'b--*', 'DisplayName', "$f_2, \hat{\omega}_{\widetilde{f}}$");
+plot(SNRs, out_SNRs_o2(1, :), 'k-o', 'DisplayName', "$f_3, \hat{\omega}_{\widetilde{f}}^{[2]}$");
+plot(SNRs, out_SNRs_o1(1, :), 'k--o', 'DisplayName', "$f_3, \hat{\omega}_{\widetilde{f}}$");
 hold off;
 xlabel('input SNR');
 ylabel('output SNR');

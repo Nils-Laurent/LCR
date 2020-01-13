@@ -26,16 +26,16 @@ SNRs = -10:5:30;
 NRep = 10;
 
 %stft test
-[g, Lg] = create_gaussian_window(L, Nfft, sigma);
-[TFR] = tfrstft(s_clean, Nfft, 1, g, Lg);
-figure;
-imagesc((0:L-1)/L, (L/Nfft)*(1:Nfft), abs(TFR));
-set(gca,'ydir','normal');
-colormap(flipud(gray));
-axis square
-xlabel('time');
-ylabel('frequency');
-pause
+% [g, Lg] = create_gaussian_window(L, Nfft, sigma);
+% [TFR] = tfrstft(s_clean, Nfft, 1, g, Lg);
+% figure;
+% imagesc((0:L-1)/L, (L/Nfft)*(1:Nfft), abs(TFR));
+% set(gca,'ydir','normal');
+% colormap(flipud(gray));
+% axis square
+% xlabel('time');
+% ylabel('frequency');
+% pause
 
 %% test denoise
 [SNR_LC, SNR_SSR_HT_init, SNR_SSR_HT_var, SNR_HT] = test_denoise_LC(...

@@ -16,7 +16,7 @@ Nfft = 512;
 SNRs = -10:5:30;
 NRep = 10;
 
-iCR = 0;
+TFR_all = zeros(Nfft, L);
 for CR=CRs
     iCR = iCR + 1;
     
@@ -32,17 +32,34 @@ for CR=CRs
     sigma = 1/sqrt(CR);
 
     % stft test
-%     [g, Lg] = create_gaussian_window(L, Nfft, sigma);
-%     [TFR] = tfrstft(s_clean, Nfft, 1, g, Lg);
-% 
-%     figure;
-%     imagesc((0:L-1)/L, (L/Nfft)*(1:Nfft), abs(TFR));
-%     set(gca,'ydir','normal');
-%     colormap(flipud(gray));
-%     axis square
-%     xlabel('time');
-%     ylabel('frequency');
-%     pause
+    [g, Lg] = create_gaussian_window(L, Nfft, sigma);
+    [TFR_sig] = tfrstft(s_clean, Nfft, 1, g, Lg);
+    TFR_all = TFR_all + TFR_sig;
+end
+
+figure;
+imagesc((0:L-1)/L, (L/Nfft)*(1:Nfft), abs(TFR_all));
+set(gca,'ydir','normal');
+colormap(flipud(gray));
+axis square
+xlabel('time');
+ylabel('frequency');
+pause
+
+iCR = 0;
+for CR=CRs
+    iCR = iCR + 1;
+    
+    %% Signal definition
+    phi = f1_amp*t+CR*(t.^2)/2;
+
+    s_clean = exp(2*1i*pi*phi);
+    NRidges = 1;
+    NR_phip = f1_amp + CR*t;
+    NR_phipp = CR*ones(L, 1);
+    
+    %% STFT related operations
+    sigma = 1/sqrt(CR);
 
     %% denoising test
     ftitle = sprintf("Chirp rate = %d", CR);
